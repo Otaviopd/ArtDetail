@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Detail - Estética Automotiva</title>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- SheetJS para exportação Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0B0F14;
+            --bg-secondary: #111827;
+            --accent-cyan: #17A2B8;
+            --text-light: #F2F5F7;
+            --warning: #FFCC00;
+            --text-secondary: #9AA4AE;
+            --border-color: #2D3748;
+            --hover-bg: #1A202C;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-circle {
+            width: 50px;
+            height: 50px;
+            background: #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--text-light);
+            position: relative;
+        }
+
+        .logo-text {
+            color: var(--accent-cyan);
+            font-size: 2rem;
+            font-weight: bold;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .logo-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: -5px;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-item {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: var(--accent-cyan);
+            background: var(--hover-bg);
+        }
+
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            padding: 2rem 0;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            margin: 0.5rem 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            color: var(--accent-cyan);
+            background: var(--hover-bg);
+            border-left-color: var(--accent-cyan);
+        }
+
+        .content {
+            flex: 1;
+            padding: 2rem;
+            background: var(--bg-primary);
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .export-buttons .btn {
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-cyan);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--hover-bg);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background: var(--bg-primary);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .table td {
+            color: var(--text-secondary);
+        }
+
+        .table tr:hover {
+            background: var(--hover-bg);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: var(--text-light);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #10B981;
+            color: white;
+        }
+
+        .badge-warning {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .badge-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .badge-info {
+            background: var(--accent-cyan);
+            color: white;
+        }
+
+        .funcionarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .funcionario-card {
+            background: var(--bg-secondary);
+            border: 2px solid;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .funcionario-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .funcionario-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .funcionario-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .funcionario-info h4 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .funcionario-status {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .veiculo-designado {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .veiculo-designado h5 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .veiculo-info {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-liberar {
+            background: #EF4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-liberar:hover {
+            background: #DC2626;
+        }
+
+        .veiculos-aguardando-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .veiculo-aguardando {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .veiculo-aguardando:hover {
+            border-color: var(--primary-color);
+            transform: translateX(4px);
+        }
+
+        .veiculo-aguardando-info h5 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+        }
+
+        .veiculo-aguardando-info p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-designar {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-designar:hover {
+            background: var(--primary-hover);
+            transform: scale(1.05);
+        }
+
+        .funcionario-livre {
+            opacity: 0.7;
+        }
+
+        .funcionario-ocupado {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .main-container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 1rem 0;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-circle">
+                <span class="logo-text">AD</span>
+            </div>
+            <div>
+                <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1.2rem;">ART DETAIL</div>
+                <div class="logo-subtitle">ESTÉTICA AUTOMOTIVA</div>
+            </div>
+        </div>
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" onclick="showPage('dashboard')">Dashboard</a>
+            <a href="#" class="nav-item" onclick="showPage('clientes')">Clientes</a>
+            <a href="#" class="nav-item" onclick="showPage('veiculos')">Veículos</a>
+            <a href="#" class="nav-item" onclick="showPage('servicos')">Serviços</a>
+        </nav>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link active" onclick="showPage('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('clientes')">
+                        <i class="fas fa-users"></i>
+                        Clientes
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('veiculos')">
+                        <i class="fas fa-car"></i>
+                        Veículos
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('servicos')">
+                        <i class="fas fa-tools"></i>
+                        Serviços
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('agenda')">
+                        <i class="fas fa-calendar-alt"></i>
+                        Agenda
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('ordens')">
+                        <i class="fas fa-clipboard-list"></i>
+                        Ordens de Serviço
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('estoque')">
+                        <i class="fas fa-boxes"></i>
+                        Estoque
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('relatorios')">
+                        <i class="fas fa-chart-bar"></i>
+                        Relatórios
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a href="#" class="sidebar-link" onclick="showPage('designacoes')">
+                        <i class="fas fa-users-cog"></i>
+                        Designações
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="content">
+            <!-- Dashboard Page -->
+            <div id="dashboard-page" class="page">
+                <div class="page-header">
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Visão geral do seu negócio</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" id="total-clientes">0</div>
+                        <div class="stat-label">Clientes Cadastrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="stat-number" id="total-veiculos">0</div>
+                        <div class="stat-label">Veículos Cadastrados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-number" id="agendamentos-hoje">0</div>
+                        <div class="stat-label">Agendamentos Hoje</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="stat-number" id="os-abertas">0</div>
+                        <div class="stat-label">OS em Andamento</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-light);">Agendamentos de Hoje</h3>
+                    <div id="agendamentos-hoje-lista">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                            Nenhum agendamento para hoje
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clientes Page -->
+            <div id="clientes-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Clientes</h1>
+                    <p class="page-subtitle">Gerencie seus clientes</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('cliente-modal')">
+                        <i class="fas fa-plus"></i>
+                        Novo Cliente
+                    </button>
+                </div>
+
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th>Veículos</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientes-table">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    Nenhum cliente cadastrado
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Veículos Page -->
+            <div id="veiculos-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Veículos</h1>
+                    <p class="page-subtitle">Gerencie os veículos dos clientes</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('veiculo-modal')">
+                        <i class="fas fa-plus"></i>
+                        Novo Veículo
+                    </button>
+                </div>
+
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Modelo</th>
+                                <th>Cliente</th>
+                                <th>Cor</th>
+                                <th>Ano</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="veiculos-table">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    Nenhum veículo cadastrado
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Serviços Page -->
+            <div id="servicos-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Serviços</h1>
+                    <p class="page-subtitle">Gerencie seus serviços e preços</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('servico-modal')">
+                        <i class="fas fa-plus"></i>
+                        Novo Serviço
+                    </button>
+                </div>
+
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th>Preço</th>
+                                <th>Duração</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicos-table">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    Nenhum serviço cadastrado
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Agenda Page -->
+            <div id="agenda-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Agenda</h1>
+                    <p class="page-subtitle">Gerencie seus agendamentos</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('agendamento-modal')">
+                        <i class="fas fa-plus"></i>
+                        Novo Agendamento
+                    </button>
+                </div>
+
+                <div class="card">
+                    <div id="calendario-container">
+                        <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            Calendário em desenvolvimento
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ordens de Serviço Page -->
+            <div id="ordens-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Ordens de Serviço</h1>
+                    <p class="page-subtitle">Gerencie as ordens de serviço</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('os-modal')">
+                        <i class="fas fa-plus"></i> Nova Ordem de Serviço
+                    </button>
+                </div>
+
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Veículo</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordens-table">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    Nenhuma ordem de serviço cadastrada
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Estoque Page -->
+            <div id="estoque-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Controle de Estoque</h1>
+                    <p class="page-subtitle">Gerencie produtos e materiais</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('produto-modal')">
+                        <i class="fas fa-plus"></i>
+                        Novo Produto
+                    </button>
+                </div>
+
+                <div class="card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Quantidade</th>
+                                <th>Estoque Mínimo</th>
+                                <th>Preço Unit.</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produtos-table">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                    Nenhum produto cadastrado
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Relatórios Page -->
+            <div id="relatorios-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Relatórios</h1>
+                    <p class="page-subtitle">Análise do seu negócio</p>
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-light);">Exportar Dados</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Exporte os dados do sistema em formato CSV para análise externa
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportRelatoriGeral()">
+                            <i class="fas fa-file-excel"></i>
+                            Relatório Geral (XLSX)
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportRelatorioDetalhado()">
+                            <i class="fas fa-file-excel"></i>
+                            Relatório Detalhado (XLSX)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-number" id="relatorio-clientes">0</div>
+                        <div class="stat-label">Total de Clientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="stat-number" id="relatorio-veiculos">0</div>
+                        <div class="stat-label">Total de Veículos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="stat-number" id="relatorio-servicos">0</div>
+                        <div class="stat-label">Serviços Ativos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="stat-number" id="relatorio-produtos">0</div>
+                        <div class="stat-label">Produtos em Estoque</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-light);">Produtos com Estoque Baixo</h3>
+                    <div id="produtos-estoque-baixo">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                            Carregando...
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Designações Page -->
+            <div id="designacoes-page" class="page hidden">
+                <div class="page-header">
+                    <h1 class="page-title">Designações</h1>
+                    <p class="page-subtitle">Gerencie a designação de veículos para funcionários</p>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="openModal('funcionario-modal')">
+                        <i class="fas fa-user-plus"></i> Novo Funcionário
+                    </button>
+                </div>
+
+                <div class="content-grid">
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Funcionários</h3>
+                        <div id="funcionarios-grid" class="funcionarios-grid">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Veículos Aguardando</h3>
+                        <div id="veiculos-aguardando" class="veiculos-aguardando-list">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Funcionário -->
+    <div id="funcionario-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Funcionário</h2>
+                <button class="close-btn" onclick="closeModal('funcionario-modal')">&times;</button>
+            </div>
+            <form id="funcionario-form">
+                <div class="form-group">
+                    <label class="form-label">Nome *</label>
+                    <input type="text" class="form-input" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cor Identificadora *</label>
+                    <select class="form-input" name="cor" required>
+                        <option value="">Selecione uma cor</option>
+                        <option value="#10B981">🟢 Verde</option>
+                        <option value="#3B82F6">🔵 Azul</option>
+                        <option value="#F59E0B">🟠 Laranja</option>
+                        <option value="#8B5CF6">🟣 Roxo</option>
+                        <option value="#EF4444">🔴 Vermelho</option>
+                        <option value="#06B6D4">🔷 Ciano</option>
+                        <option value="#84CC16">🟢 Verde Claro</option>
+                        <option value="#F97316">🟠 Laranja Escuro</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('funcionario-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Agendamento -->
+    <div id="agendamento-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Agendamento</h2>
+                <button class="close-btn" onclick="closeModal('agendamento-modal')">&times;</button>
+            </div>
+            <form id="agendamento-form">
+                <div class="form-group">
+                    <label class="form-label">Cliente *</label>
+                    <select class="form-input" name="clienteId" required>
+                        <option value="">Selecione um cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Veículo *</label>
+                    <select class="form-input" name="veiculoId" required>
+                        <option value="">Selecione um veículo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Serviço *</label>
+                    <select class="form-input" name="servicoId" required>
+                        <option value="">Selecione um serviço</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data *</label>
+                    <input type="date" class="form-input" name="data" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Horário *</label>
+                    <input type="time" class="form-input" name="horario" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observações</label>
+                    <textarea class="form-input" name="observacoes" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('agendamento-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente -->
+    <div id="cliente-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Cliente</h2>
+                <button class="close-btn" onclick="closeModal('cliente-modal')">&times;</button>
+            </div>
+            <form id="cliente-form">
+                <div class="form-group">
+                    <label class="form-label">Nome *</label>
+                    <input type="text" class="form-input" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Telefone *</label>
+                    <input type="tel" class="form-input" name="telefone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" name="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CPF/CNPJ</label>
+                    <input type="text" class="form-input" name="documento">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Endereço</label>
+                    <input type="text" class="form-input" name="endereco">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('cliente-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Veículo -->
+    <div id="veiculo-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Veículo</h2>
+                <button class="close-btn" onclick="closeModal('veiculo-modal')">&times;</button>
+            </div>
+            <form id="veiculo-form">
+                <div class="form-group">
+                    <label class="form-label">Cliente *</label>
+                    <select class="form-input" name="clienteId" required>
+                        <option value="">Selecione um cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Placa *</label>
+                    <input type="text" class="form-input" name="placa" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Marca</label>
+                    <input type="text" class="form-input" name="marca">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Modelo</label>
+                    <input type="text" class="form-input" name="modelo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cor</label>
+                    <input type="text" class="form-input" name="cor">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ano</label>
+                    <input type="number" class="form-input" name="ano" min="1900" max="2030">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fotos do Veículo</label>
+                    <div class="image-upload-area" id="veiculo-image-upload">
+                        <div class="upload-zone" onclick="document.getElementById('veiculo-images').click()">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                            <p style="color: var(--text-secondary);">Clique para adicionar fotos ou arraste aqui</p>
+                            <p style="color: var(--text-secondary); font-size: 0.8rem;">Máximo 5 fotos, até 2MB cada</p>
+                        </div>
+                        <input type="file" id="veiculo-images" name="images" multiple accept="image/*" style="display: none;">
+                        <div class="image-preview" id="veiculo-image-preview"></div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('veiculo-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Serviço -->
+    <div id="servico-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Serviço</h2>
+                <button class="close-btn" onclick="closeModal('servico-modal')">&times;</button>
+            </div>
+            <form id="servico-form">
+                <div class="form-group">
+                    <label class="form-label">Nome *</label>
+                    <input type="text" class="form-input" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-input" name="descricao" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Preço (R$) *</label>
+                    <input type="number" class="form-input" name="preco" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Duração (minutos) *</label>
+                    <input type="number" class="form-input" name="duracao" min="1" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('servico-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Produto (Estoque) -->
+    <div id="produto-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Produto</h2>
+                <button class="close-btn" onclick="closeModal('produto-modal')">&times;</button>
+            </div>
+            <form id="produto-form">
+                <div class="form-group">
+                    <label class="form-label">Nome do Produto *</label>
+                    <input type="text" class="form-input" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoria *</label>
+                    <select class="form-input" name="categoria" required>
+                        <option value="">Selecione uma categoria</option>
+                        <option value="Shampoo">Shampoo</option>
+                        <option value="Cera">Cera</option>
+                        <option value="Pneu">Pneu</option>
+                        <option value="Acessórios">Acessórios</option>
+                        <option value="Ferramentas">Ferramentas</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Quantidade em Estoque *</label>
+                    <input type="number" class="form-input" name="quantidade" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estoque Mínimo *</label>
+                    <input type="number" class="form-input" name="estoqueMinimo" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Preço Unitário (R$) *</label>
+                    <input type="number" class="form-input" name="preco" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea class="form-input" name="descricao" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('produto-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        .image-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            background: var(--bg-primary);
+        }
+
+        .upload-zone {
+            text-align: center;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-cyan);
+            background: var(--hover-bg);
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .image-preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .image-preview-item .remove-btn:hover {
+            background: rgba(239, 68, 68, 1);
+        }
+
+        .vehicle-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .vehicle-image {
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 4/3;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .vehicle-image:hover {
+            transform: scale(1.05);
+        }
+
+        .vehicle-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .stock-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stock-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .stock-ok {
+            background: #10B981;
+        }
+
+        .stock-low {
+            background: #FFCC00;
+        }
+
+        .stock-out {
+            background: #EF4444;
+        }
+    </style>
+
+    <script src="app.js"></script>
+</body>
+</html>
