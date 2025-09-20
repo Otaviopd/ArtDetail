@@ -13,7 +13,6 @@ class ArtDetailSystem {
         this.showPage('dashboard');
         this.updateDashboard();
         this.updateRelatorios();
-        this.updateDesignacoes();
     }
 
     // ===== GERENCIAMENTO DE DADOS =====
@@ -791,8 +790,9 @@ class ArtDetailSystem {
             case 'relatorios':
                 this.updateRelatorios();
                 break;
-            case 'designacoes':
-                this.updateDesignacoes();
+            case 'planos':
+                this.renderPlanos();
+                this.renderAssinaturas();
                 break;
         }
 
@@ -2019,6 +2019,199 @@ class ArtDetailSystem {
         document.body.removeChild(link);
     }
 }
+
+// Extensões: Planos/Assinaturas e Relatórios (sem backend)
+(function(){
+    // Helpers de armazenamento
+    ArtDetailSystem.prototype.getPlanos = function(){
+        return JSON.parse(localStorage.getItem('artdetail_planos') || '[]');
+    };
+    ArtDetailSystem.prototype.savePlanos = function(planos){
+        localStorage.setItem('artdetail_planos', JSON.stringify(planos));
+    };
+    ArtDetailSystem.prototype.addPlano = function(plano){
+        const ps = this.getPlanos(); ps.push(plano); this.savePlanos(ps); return plano;
+    };
+    ArtDetailSystem.prototype.updatePlano = function(id, dados){
+        const ps = this.getPlanos(); const i = ps.findIndex(p=>p.id===id);
+        if (i!==-1){ ps[i] = { ...ps[i], ...dados }; this.savePlanos(ps); return ps[i]; }
+        return null;
+    };
+    ArtDetailSystem.prototype.deletePlano = function(id){
+        this.savePlanos(this.getPlanos().filter(p=>p.id!==id));
+    };
+
+    ArtDetailSystem.prototype.getAssinaturas = function(){
+        return JSON.parse(localStorage.getItem('artdetail_assinaturas') || '[]');
+    };
+    ArtDetailSystem.prototype.saveAssinaturas = function(list){
+        localStorage.setItem('artdetail_assinaturas', JSON.stringify(list));
+    };
+    ArtDetailSystem.prototype.addAssinatura = function(a){
+        const xs = this.getAssinaturas(); xs.push(a); this.saveAssinaturas(xs); return a;
+    };
+    ArtDetailSystem.prototype.deleteAssinatura = function(id){
+        this.saveAssinaturas(this.getAssinaturas().filter(a=>a.id!==id));
+    };
+
+    // Consumos por mês (controle de uso de regras)
+    ArtDetailSystem.prototype.getConsumos = function(){
+        return JSON.parse(localStorage.getItem('artdetail_consumos') || '[]');
+    };
+    ArtDetailSystem.prototype.saveConsumos = function(cs){
+        localStorage.setItem('artdetail_consumos', JSON.stringify(cs));
+    };
+    ArtDetailSystem.prototype.registrarConsumo = function(assinaturaId, servicoId, dataISO){
+        const d = new Date(dataISO || new Date());
+        const anoMes = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        const cs = this.getConsumos();
+        const idx = cs.findIndex(c=>c.assinaturaId===assinaturaId && c.servicoId===servicoId && c.anoMes===anoMes);
+        if (idx>=0) cs[idx].quantidade = (cs[idx].quantidade||0)+1; else cs.push({ id: this.generateId(), assinaturaId, servicoId, anoMes, quantidade: 1 });
+        this.saveConsumos(cs);
+    };
+
+    // Precificação com plano
+    ArtDetailSystem.prototype.calcularPrecoComPlano = function(clienteId, servicoId, dataISO){
+        const servico = this.getServicos().find(s=>s.id===servicoId);
+        const precoBase = servico ? Number(servico.preco||0) : 0;
+        const assinatura = this.getAssinaturas().find(a=>a.ativo!==false && a.tipoAssinante==='cliente' && a.clienteId===clienteId);
+        if (!assinatura) return { precoFinal: precoBase };
+        const plano = this.getPlanos().find(p=>p.id===assinatura.planoId && p.ativo!==false);
+        if (!plano) return { precoFinal: precoBase };
+        const result = { precoFinal: precoBase, descontoPercentual: 0, planoAplicado: plano.nome, consumoRegistrado: false };
+        const regra = (plano.regras||[]).find(r=>r.servicoId===servicoId);
+        if (regra){
+            const d = new Date(dataISO || new Date());
+            const anoMes = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            const usado = (this.getConsumos().find(c=>c.assinaturaId===assinatura.id && c.servicoId===servicoId && c.anoMes===anoMes)?.quantidade) || 0;
+            if (usado < (regra.quantidadeMensal||0)){
+                if (regra.cobertura==='incluso') result.precoFinal = 0;
+                else if (regra.cobertura==='desconto'){ const p = Number(regra.descontoPercentual||0); result.precoFinal = Math.max(0, precoBase*(1-p/100)); result.descontoPercentual=p; }
+                this.registrarConsumo(assinatura.id, servicoId, dataISO); result.consumoRegistrado = true; return result;
+            }
+        }
+        const pGeral = Number(plano.descontoPercentual||0);
+        if (pGeral>0){ result.precoFinal = Math.max(0, precoBase*(1-pGeral/100)); result.descontoPercentual=pGeral; }
+        return result;
+    };
+
+    // Renderizações
+    ArtDetailSystem.prototype.renderPlanos = function(){
+        const tbody = document.getElementById('planos-table'); if (!tbody) return; const planos = this.getPlanos(); const servicos = this.getServicos();
+        if (!planos.length){ tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color: var(--text-secondary);">Nenhum plano cadastrado</td></tr>'; return; }
+        tbody.innerHTML = planos.map(p=>{
+            const regras = (p.regras||[]).map(r=>{ const s = servicos.find(x=>x.id===r.servicoId); const nome = s? s.nome : r.servicoId; return r.cobertura==='incluso'? `${r.quantidadeMensal}x/mês de ${nome} incluso` : `${r.quantidadeMensal}x/mês de ${nome} com ${r.descontoPercentual||0}%`; }).join('<br>') || '-';
+            return `<tr>
+                <td>${p.nome}</td>
+                <td>${p.tipo}</td>
+                <td>${p.duracaoMeses||12} meses</td>
+                <td>${regras}</td>
+                <td><span class="badge ${p.ativo===false?'badge-danger':'badge-success'}">${p.ativo===false?'Inativo':'Ativo'}</span></td>
+                <td>
+                    <button class="btn btn-secondary" onclick="artDetail.updatePlano('${p.id}', {ativo: ${p.ativo===false?'true':'false'}}); artDetail.renderPlanos();" style="padding:0.5rem; margin-right:0.5rem;"><i class="fas fa-toggle-on"></i></button>
+                    <button class="btn btn-secondary" onclick="artDetail.deletePlano('${p.id}'); artDetail.renderPlanos();" style="padding:0.5rem; background:#EF4444;"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`; }).join('');
+    };
+
+    ArtDetailSystem.prototype.renderAssinaturas = function(){
+        const tbody = document.getElementById('assinaturas-table'); if (!tbody) return; const as = this.getAssinaturas(); const planos = this.getPlanos(); const clientes = this.getClientes();
+        if (!as.length){ tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; color: var(--text-secondary);">Nenhuma assinatura</td></tr>'; return; }
+        tbody.innerHTML = as.map(a=>{ const plano = planos.find(p=>p.id===a.planoId); const nomePlano = plano? plano.nome : a.planoId; const nomeAss = a.tipoAssinante==='empresa'? (a.empresaNome||'Empresa') : (clientes.find(c=>c.id===a.clienteId)?.nome||'Cliente'); const status = a.ativo!==false ? 'Ativa' : 'Inativa'; return `<tr><td>${nomeAss}</td><td>${nomePlano}</td><td>${a.inicio||'-'}</td><td>${a.fim||'-'}</td><td><span class="badge ${a.ativo!==false?'badge-success':'badge-danger'}">${status}</span></td><td><button class="btn btn-secondary" onclick="artDetail.deleteAssinatura('${a.id}'); artDetail.renderAssinaturas();" style="padding:0.5rem; background:#EF4444;"><i class="fas fa-trash"></i></button></td></tr>`; }).join('');
+    };
+
+    ArtDetailSystem.prototype.renderTopServicos = function(){
+        const container = document.getElementById('top-servicos-lista'); if (!container) return; const ag = this.getAgendamentos(); const sv = this.getServicos();
+        if (!ag.length){ container.innerHTML = '<p style="color: var(--text-secondary); text-align:center; padding:2rem;">Ainda sem agendamentos registrados</p>'; return; }
+        const count = {}; ag.forEach(a=>{ if (a.servicoId) count[a.servicoId]=(count[a.servicoId]||0)+1; });
+        const ranking = Object.entries(count).map(([id,c])=>({id,c, s: sv.find(x=>x.id===id)})).filter(x=>x.s).sort((a,b)=>b.c-a.c).slice(0,10);
+        if (!ranking.length){ container.innerHTML = '<p style="color: var(--text-secondary); text-align:center; padding:2rem;">Sem dados suficientes</p>'; return; }
+        container.innerHTML = `<table class="table"><thead><tr><th>Serviço</th><th>Realizações</th><th>Preço</th></tr></thead><tbody>${ranking.map(r=>`<tr><td>${r.s.nome}</td><td>${r.c}</td><td>${this.formatCurrency(r.s.preco||0)}</td></tr>`).join('')}</tbody></table>`;
+    };
+
+    // Override leve: openModal e setupEventListeners e showPage
+    const __open = ArtDetailSystem.prototype.openModal;
+    ArtDetailSystem.prototype.openModal = function(modalId){
+        __open.call(this, modalId);
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        if (modalId==='plano-modal'){
+            const selectSrv = modal.querySelector('[name="servicoIdRegra"]');
+            if (selectSrv){
+                const servicos = this.getServicos();
+                selectSrv.innerHTML = '<option value="">Selecione o serviço</option>' + servicos.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
+            }
+        }
+        if (modalId==='assinatura-modal'){
+            const planosSelect = modal.querySelector('[name="planoId"]');
+            const clientesSelect = modal.querySelector('[name="clienteId"]');
+            if (planosSelect){ const planos = this.getPlanos(); planosSelect.innerHTML = planos.map(p=>`<option value="${p.id}">${p.nome}</option>`).join(''); }
+            if (clientesSelect){ const clientes = this.getClientes(); clientesSelect.innerHTML = clientes.map(c=>`<option value="${c.id}">${c.nome}</option>`).join(''); }
+        }
+        if (modalId==='agendamento-modal'){
+            const cliSel = modal.querySelector('[name="clienteId"]');
+            const veiSel = modal.querySelector('[name="veiculoId"]');
+            const srvSel = modal.querySelector('[name="servicoId"]');
+            if (cliSel){ const clientes = this.getClientes(); cliSel.innerHTML = '<option value="">Selecione um cliente</option>' + clientes.map(c=>`<option value="${c.id}">${c.nome}</option>`).join(''); }
+            if (veiSel){ const veiculos = this.getVeiculos(); veiSel.innerHTML = '<option value="">Selecione um veículo</option>' + veiculos.map(v=>`<option value="${v.id}">${v.placa} - ${v.marca} ${v.modelo}</option>`).join(''); }
+            if (srvSel){ const servicos = this.getServicos(); srvSel.innerHTML = '<option value="">Selecione um serviço</option>' + servicos.filter(s=>s.active).map(s=>`<option value="${s.id}">${s.nome} (${this.formatCurrency(s.preco)})</option>`).join(''); }
+        }
+    };
+
+    const __setup = ArtDetailSystem.prototype.setupEventListeners;
+    ArtDetailSystem.prototype.setupEventListeners = function(){
+        __setup.call(this);
+        // Agendamento
+        const agendamentoForm = document.getElementById('agendamento-form');
+        if (agendamentoForm){
+            agendamentoForm.addEventListener('submit', (e)=>{
+                e.preventDefault();
+                const fd = new FormData(agendamentoForm);
+                const clienteId = fd.get('clienteId');
+                const veiculoId = fd.get('veiculoId');
+                const servicoId = fd.get('servicoId');
+                const data = fd.get('data');
+                const horario = fd.get('horario');
+                if (!clienteId || !veiculoId || !servicoId || !data || !horario){ this.showNotification('Preencha todos os campos do agendamento', 'error'); return; }
+                const servico = this.getServicos().find(s=>s.id===servicoId);
+                const precoOriginal = servico ? Number(servico.preco||0) : 0;
+                const pricing = this.calcularPrecoComPlano(clienteId, servicoId, `${data}T${horario}:00`);
+                const agendamento = { id: this.generateId(), clienteId, vehicleId: veiculoId, servicoId, scheduledAt: `${data}T${horario}:00`, status: 'PENDING', precoOriginal, precoFinal: pricing.precoFinal ?? precoOriginal, descontoPercentual: pricing.descontoPercentual || 0, planoAplicado: pricing.planoAplicado || null, createdAt: new Date().toISOString() };
+                this.addAgendamento(agendamento);
+                this.closeModal('agendamento-modal'); agendamentoForm.reset();
+                this.updateRelatorios(); this.showNotification(pricing.consumoRegistrado? 'Agendamento criado e consumo do plano registrado' : (pricing.planoAplicado? 'Agendamento criado com desconto de plano' : 'Agendamento criado'), 'success');
+            });
+        }
+        // Plano
+        const planoForm = document.getElementById('plano-form');
+        if (planoForm){
+            planoForm.addEventListener('submit',(e)=>{
+                e.preventDefault(); const fd = new FormData(planoForm);
+                const plano = { id: this.generateId(), nome: fd.get('nome'), tipo: fd.get('tipo'), duracaoMeses: Number(fd.get('duracao')||12), descontoPercentual: Number(fd.get('descontoPercentual')||0), regras: [], ativo: true, createdAt: new Date().toISOString() };
+                const servicoIdRegra = fd.get('servicoIdRegra'); const qtd = Number(fd.get('quantidadeMensal')||0); const cobertura = fd.get('cobertura'); const descontoRegra = Number(fd.get('descontoRegra')||0);
+                if (servicoIdRegra && qtd>0){ plano.regras.push({ servicoId: servicoIdRegra, quantidadeMensal: qtd, cobertura: cobertura||'incluso', descontoPercentual: descontoRegra||0 }); }
+                this.addPlano(plano); this.closeModal('plano-modal'); planoForm.reset(); this.showNotification('Plano criado com sucesso!', 'success'); this.renderPlanos();
+            });
+        }
+        // Assinatura
+        const assinaturaForm = document.getElementById('assinatura-form');
+        if (assinaturaForm){
+            assinaturaForm.addEventListener('submit',(e)=>{
+                e.preventDefault(); const fd = new FormData(assinaturaForm); const tipo = fd.get('tipoAssinante');
+                const a = { id: this.generateId(), planoId: fd.get('planoId'), tipoAssinante: tipo, clienteId: tipo==='cliente'? fd.get('clienteId') : null, empresaNome: tipo==='empresa'? (fd.get('empresaNome')||'').trim() : null, inicio: fd.get('inicio')||new Date().toISOString().split('T')[0], fim: fd.get('fim')||null, ativo: true, createdAt: new Date().toISOString() };
+                this.addAssinatura(a); this.closeModal('assinatura-modal'); assinaturaForm.reset(); this.showNotification('Assinatura criada!', 'success'); this.renderAssinaturas();
+            });
+            const tipoSelect = assinaturaForm.querySelector('[name="tipoAssinante"]'); if (tipoSelect){ tipoSelect.addEventListener('change', ()=>{ const isEmp = tipoSelect.value==='empresa'; document.getElementById('campo-cliente-assinatura').style.display = isEmp? 'none' : ''; document.getElementById('campo-empresa-assinatura').style.display = isEmp? '' : 'none'; }); }
+        }
+    };
+
+    const __show = ArtDetailSystem.prototype.showPage;
+    ArtDetailSystem.prototype.showPage = function(pageName){
+        __show.call(this, pageName);
+        if (pageName==='relatorios'){ this.renderTopServicos(); }
+        if (pageName==='planos'){ this.renderPlanos(); this.renderAssinaturas(); }
+    };
+})();
 
 // Funções globais para os event handlers do HTML
 function showPage(pageName) {
