@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estética Automotiva</title>
+    <title>Art Detail - Estética Automotiva</title>
     
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -443,17 +443,6 @@
             margin-top: 0.25rem;
         }
 
-        .veiculo-designado {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .veiculo-designado h5 {
-            margin: 0 0 0.5rem 0;
-            color: var(--text-primary);
-        }
 
         .veiculo-info {
             font-size: 0.9rem;
@@ -565,10 +554,10 @@
     <header class="header">
         <div class="logo">
             <div class="logo-circle">
-                <span class="logo-text"></span>
+                <span class="logo-text">AD</span>
             </div>
             <div>
-                <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1.2rem;"></div>
+                <div style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 1.2rem;">ART DETAIL</div>
                 <div class="logo-subtitle">ESTÉTICA AUTOMOTIVA</div>
             </div>
         </div>
@@ -632,9 +621,9 @@
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="#" class="sidebar-link" onclick="showPage('designacoes')">
-                        <i class="fas fa-users-cog"></i>
-                        Designações
+                    <a href="#" class="sidebar-link" onclick="showPage('planos')">
+                        <i class="fas fa-ticket-alt"></i>
+                        Planos
                     </a>
                 </li>
             </ul>
@@ -953,6 +942,13 @@
                 </div>
 
                 <div class="card">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-light);">Top Servi��os (mais realizados)</h3>
+                    <div id="top-servicos-lista">
+                        <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Sem dados suficientes ainda</p>
+                    </div>
+                </div>
+
+                <div class="card">
                     <h3 style="margin-bottom: 1rem; color: var(--text-light);">Produtos com Estoque Baixo</h3>
                     <div id="produtos-estoque-baixo">
                         <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
@@ -962,36 +958,162 @@
                 </div>
             </div>
 
-            <!-- Designações Page -->
-            <div id="designacoes-page" class="page hidden">
+
+            <!-- Planos Page -->
+            <div id="planos-page" class="page hidden">
                 <div class="page-header">
-                    <h1 class="page-title">Designações</h1>
-                    <p class="page-subtitle">Gerencie a designação de veículos para funcionários</p>
+                    <h1 class="page-title">Planos e Assinaturas</h1>
+                    <p class="page-subtitle">Crie planos (empresa/individual), limites mensais e descontos</p>
                 </div>
 
-                <div style="margin-bottom: 2rem;">
-                    <button class="btn btn-primary" onclick="openModal('funcionario-modal')">
-                        <i class="fas fa-user-plus"></i> Novo Funcionário
+                <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="openModal('plano-modal')">
+                        <i class="fas fa-plus"></i> Novo Plano
+                    </button>
+                    <button class="btn btn-secondary" onclick="openModal('assinatura-modal')">
+                        <i class="fas fa-user-tag"></i> Nova Assinatura
                     </button>
                 </div>
 
                 <div class="content-grid">
                     <div class="card">
-                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Funcionários</h3>
-                        <div id="funcionarios-grid" class="funcionarios-grid">
-                            <!-- Será preenchido dinamicamente -->
-                        </div>
+                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Planos</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Tipo</th>
+                                    <th>Duração</th>
+                                    <th>Regras</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="planos-table">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding:2rem; color: var(--text-secondary);">Nenhum plano cadastrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <div class="card">
-                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Veículos Aguardando</h3>
-                        <div id="veiculos-aguardando" class="veiculos-aguardando-list">
-                            <!-- Será preenchido dinamicamente -->
-                        </div>
+                        <h3 style="margin-bottom: 1rem; color: var(--text-light);">Assinaturas</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente/Empresa</th>
+                                    <th>Plano</th>
+                                    <th>Início</th>
+                                    <th>Fim</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assinaturas-table">
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding:2rem; color: var(--text-secondary);">Nenhuma assinatura</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+
         </main>
+    </div>
+
+    <!-- Modal Plano -->
+    <div id="plano-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Plano</h2>
+                <button class="close-btn" onclick="closeModal('plano-modal')">&times;</button>
+            </div>
+            <form id="plano-form">
+                <div class="form-group">
+                    <label class="form-label">Nome do Plano *</label>
+                    <input type="text" class="form-input" name="nome" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo *</label>
+                    <select class="form-input" name="tipo" required>
+                        <option value="individual">Individual</option>
+                        <option value="empresa">Empresa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dura��o (meses)</label>
+                    <input type="number" class="form-input" name="duracao" value="12" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Desconto geral (%)</label>
+                    <input type="number" class="form-input" name="descontoPercentual" value="0" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Regra de Uso Mensal (opcional)</label>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Ex.: 4 lavagens/m�s inclu�das</p>
+                    <div style="display: grid; gap: 0.5rem; grid-template-columns: 1fr 1fr 1fr;">
+                        <select class="form-input" name="servicoIdRegra">
+                            <option value="">Selecione o servi�o</option>
+                        </select>
+                        <input type="number" class="form-input" name="quantidadeMensal" placeholder="Qtd/m�s" min="1">
+                        <select class="form-input" name="cobertura">
+                            <option value="incluso">Incluso (R$ 0 at� o limite)</option>
+                            <option value="desconto">Desconto (%)</option>
+                        </select>
+                    </div>
+                    <input type="number" class="form-input" name="descontoRegra" placeholder="% de desconto para a regra" min="0" max="100" style="margin-top: 0.5rem;">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('plano-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Assinatura -->
+    <div id="assinatura-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nova Assinatura</h2>
+                <button class="close-btn" onclick="closeModal('assinatura-modal')">&times;</button>
+            </div>
+            <form id="assinatura-form">
+                <div class="form-group">
+                    <label class="form-label">Plano *</label>
+                    <select class="form-input" name="planoId" required></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tipo de Assinante *</label>
+                    <select class="form-input" name="tipoAssinante" required>
+                        <option value="cliente">Cliente</option>
+                        <option value="empresa">Empresa</option>
+                    </select>
+                </div>
+                <div class="form-group" id="campo-cliente-assinatura">
+                    <label class="form-label">Cliente *</label>
+                    <select class="form-input" name="clienteId"></select>
+                </div>
+                <div class="form-group" id="campo-empresa-assinatura" style="display:none;">
+                    <label class="form-label">Nome da Empresa *</label>
+                    <input type="text" class="form-input" name="empresaNome">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">In�cio</label>
+                    <input type="date" class="form-input" name="inicio">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Fim</label>
+                    <input type="date" class="form-input" name="fim">
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('assinatura-modal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modal Funcionário -->
@@ -1353,6 +1475,7 @@
         .stock-out {
             background: #EF4444;
         }
+
     </style>
 
     <script src="app.js"></script>
